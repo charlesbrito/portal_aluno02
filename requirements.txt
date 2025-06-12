@@ -13,6 +13,7 @@ fastapi==0.115.12
 filelock==3.18.0
 flake8==7.2.0
 greenlet==3.2.3
+h11==0.16.0
 identify==2.6.12
 idna==3.10
 iniconfig==2.1.0
@@ -48,4 +49,5 @@ tomli==2.2.1
 tomlkit==0.13.3
 typing-inspection==0.4.1
 typing_extensions==4.14.0
+uvicorn==0.34.3
 virtualenv==20.31.2
