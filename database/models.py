@@ -9,9 +9,9 @@ class User(base):
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True)
-    ocupacao = Column(String, nullable=False)
-    hashed_password = Column(String(255))
+    username = Column(String(50), unique=True, nullable=False)
+    ocupacao = Column(String, nullable=False)  # professor ou aluno
+    hashed_password = Column(String(255), nullable=False)
 
     aluno = relationship("Aluno", back_populates="usuario", uselist=False)
     professor = relationship("Professor", back_populates="usuario", uselist=False)
@@ -21,9 +21,9 @@ class Aluno(base):
     __tablename__ = "alunos"
 
     id = Column(Integer, primary_key=True, index=True)
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True, nullable=False)
 
-    usuario = relationship("Usuario", back_populates="aluno")
+    usuario = relationship("User", back_populates="aluno")  # Aqui "User"
     matriculas = relationship("Matricula", back_populates="aluno")
 
 
@@ -31,9 +31,9 @@ class Professor(base):
     __tablename__ = "professores"
 
     id = Column(Integer, primary_key=True, index=True)
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True, nullable=False)
 
-    usuario = relationship("Usuario", back_populates="professor")
+    usuario = relationship("User", back_populates="professor")  # Aqui "User"
 
 
 class Matricula(base):
@@ -41,7 +41,7 @@ class Matricula(base):
 
     id = Column(Integer, primary_key=True, index=True)
     numero = Column(String, unique=True, index=True)
-    aluno_id = Column(Integer, ForeignKey("alunos.id"))
+    aluno_id = Column(Integer, ForeignKey("alunos.id"), nullable=False)
 
     aluno = relationship("Aluno", back_populates="matriculas")
 

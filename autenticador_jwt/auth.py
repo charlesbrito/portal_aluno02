@@ -2,8 +2,8 @@ from datetime import timedelta, datetime
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 from starlette import status
+from sqlalchemy.orm import Session
 from database.database import SessionLocal
 from database.models import User
 from passlib.context import CryptContext
@@ -12,7 +12,7 @@ from jose import jwt, JWTError
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -27,6 +27,7 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 class CreateUserRequest(BaseModel):
     username: str
     password: str
+    ocupacao: str
 
 
 class Token(BaseModel):
@@ -50,6 +51,7 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
     create_user_model = User(
         username=create_user_request.username,
         hashed_password=bcrypt_context.hash(create_user_request.password),
+        ocupacao=create_user_request.ocupacao,
     )
     db.add(create_user_model)
     db.commit()
