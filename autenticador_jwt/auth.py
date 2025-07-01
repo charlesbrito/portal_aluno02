@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from starlette import status
 from sqlalchemy.orm import Session
 from database.database import SessionLocal
-from database.models import User
+from database.models import User, Aluno, Professor, Matricula, Admin
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -55,6 +55,25 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
     )
     db.add(create_user_model)
     db.commit()
+    db.refresh(create_user_model)
+    if create_user_model.ocupacao == "aluno":
+        aluno = Aluno(usuario_id=create_user_model.id)
+        db.add(aluno)
+        db.commit()
+
+        matricula = Matricula(aluno_id=aluno.id)
+        db.add(matricula)
+        db.commit()
+
+    elif create_user_model.ocupacao == "professor":
+        professor = Professor(usuario_id=create_user_model.id)
+        db.add(professor)
+        db.commit()
+
+    elif create_user_model.ocupacao == "admin":
+        admin = Admin(usuario_id=create_user_model.id)
+        db.add(admin)
+        db.commit()
 
 
 @router.post("/token", response_model=Token)
@@ -67,7 +86,9 @@ async def login_for_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Autenticação de usuário falhou.",
         )
-    token = create_access_token(user.username, user.id, timedelta(minutes=20))
+    token = create_access_token(
+        user.username, user.id, user.ocupacao, timedelta(minutes=20)
+    )
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -80,8 +101,10 @@ def authenticate_user(username: str, password: str, db):
     return user
 
 
-def create_access_token(username: str, user_id: int, expires_delta: timedelta):
-    encode = {"sub": username, "id": user_id}
+def create_access_token(
+    username: str, user_id: int, ocupacao: str, expires_delta: timedelta
+):
+    encode = {"sub": username, "id": user_id, "ocupacao": ocupacao}
     expires = datetime.utcnow() + expires_delta
     encode.update({"exp": expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -92,12 +115,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
-        if username is None or user_id is None:
+        ocupacao: str = payload.get("ocupacao")
+        if username is None or user_id is None or ocupacao is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="O usuário não pode ser validado.",
             )
-        return {"username": username, "id": user_id}
+        return {"username": username, "id": user_id, "ocupacao": ocupacao}
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
