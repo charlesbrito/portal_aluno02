@@ -12,9 +12,9 @@ class AlunoBase(BaseModel):
     data_nascimento: date
     email: EmailStr
     serie: str
-    sala: str
     nome_pai: str
     nome_mae: str
+    sala_id: int
 
     @field_validator("cpf")
     def validar_cpf(cls, v):
@@ -58,12 +58,6 @@ class AlunoBase(BaseModel):
     def validar_serie(cls, v):
         if len(v.strip()) <= 0:
             raise ValueError("A série deve ter mais de 0 caracteres")
-        return v.title()
-
-    @field_validator("sala")
-    def validar_sala(cls, v):
-        if len(v.strip()) <= 0:
-            raise ValueError("A sala deve ter mais de 0 caracteres")
         return v.title()
 
     @field_validator("nome_pai")

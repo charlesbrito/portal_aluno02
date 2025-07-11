@@ -1,3 +1,4 @@
+from datetime import date
 from sqlalchemy import (
     Boolean,
     Column,
@@ -13,7 +14,7 @@ from sqlalchemy.orm import relationship
 import random
 
 
-# Tabelas associativas para muitos-para-muitos
+# Tabelas associativas (relações muitos-para-muitos)
 professor_sala = Table(
     "professor_sala",
     base.metadata,
@@ -29,12 +30,13 @@ professor_materia = Table(
 )
 
 
+# Usuários do sistema (aluno, professor ou admin)
 class User(base):
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False)
-    ocupacao = Column(String, nullable=False)  # professor, aluno ou admin
+    ocupacao = Column(String, nullable=False)  # 'aluno', 'professor', 'admin'
     hashed_password = Column(String(255), nullable=False)
 
     aluno = relationship("Aluno", back_populates="usuario", uselist=False)
@@ -43,19 +45,21 @@ class User(base):
 
 
 class Admin(base):
-    __tablename__ = "administrador"
+    __tablename__ = "administradores"
 
     id = Column(Integer, primary_key=True, index=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True, nullable=False)
 
-    usuario = relationship("User", back_populates="admin")
+    usuario = relationship("User", back_populates="administrador")
 
 
+# Tabela de alunos
 class Aluno(base):
     __tablename__ = "alunos"
 
     id = Column(Integer, primary_key=True, index=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), unique=True, nullable=False)
+    sala_id = Column(Integer, ForeignKey("salas.id"), nullable=True)
 
     usuario = relationship("User", back_populates="aluno")
     sala = relationship("Salas", back_populates="alunos")
@@ -64,6 +68,7 @@ class Aluno(base):
     notas = relationship("Nota", back_populates="aluno")
 
 
+# Tabela de professores
 class Professor(base):
     __tablename__ = "professores"
 
@@ -81,6 +86,7 @@ class Professor(base):
     notas = relationship("Nota", back_populates="professor")
 
 
+# Tabela de matrículas
 class Matricula(base):
     __tablename__ = "matriculas"
 
@@ -98,25 +104,26 @@ class Matricula(base):
         return f"M-{random.randint(100000, 999999)}"
 
 
+# Informações pessoais do aluno
 class InfoAluno(base):
     __tablename__ = "info_aluno"
 
     id = Column(Integer, primary_key=True)
     aluno_id = Column(Integer, ForeignKey("alunos.id"), unique=True)
-    cpf = Column(String)
-    telefone = Column(String)
-    endereco = Column(String)
-    data_nascimento = Column(Date)
-    email = Column(String)
-    serie = Column(String)
-    sala = Column(String)
-    nome_pai = Column(String)
-    nome_mae = Column(String)
+
+    cpf = Column(String, nullable=False)
+    telefone = Column(String, nullable=False)
+    endereco = Column(String, nullable=False)
+    data_nascimento = Column(Date, nullable=False)
+    email = Column(String, nullable=False)
+    serie = Column(String, nullable=False)
+    nome_pai = Column(String, nullable=True)
+    nome_mae = Column(String, nullable=True)
 
     aluno = relationship("Aluno", back_populates="info_pessoal")
 
 
-# Informações pessoais do Professor
+# Informações pessoais do professor
 class InfoProfessor(base):
     __tablename__ = "info_professor"
 
@@ -134,12 +141,12 @@ class InfoProfessor(base):
     professor = relationship("Professor", back_populates="info")
 
 
-# Sala de aula
+# Tabela de salas
 class Salas(base):
     __tablename__ = "salas"
 
     id = Column(Integer, primary_key=True)
-    sala = Column(String, unique=True)
+    sala = Column(String, unique=True, nullable=False)
 
     professores = relationship(
         "Professor", secondary=professor_sala, back_populates="salas"
@@ -147,7 +154,7 @@ class Salas(base):
     alunos = relationship("Aluno", back_populates="sala")
 
 
-# Matéria
+# Tabela de matérias
 class Materia(base):
     __tablename__ = "materias"
 
@@ -160,7 +167,7 @@ class Materia(base):
     notas = relationship("Nota", back_populates="materia")
 
 
-# Notas lançadas
+# Tabela de notas
 class Nota(base):
     __tablename__ = "notas"
 
@@ -168,8 +175,9 @@ class Nota(base):
     aluno_id = Column(Integer, ForeignKey("alunos.id"), nullable=False)
     professor_id = Column(Integer, ForeignKey("professores.id"), nullable=False)
     materia_id = Column(Integer, ForeignKey("materias.id"), nullable=False)
-
     nota = Column(Float, nullable=False)
+    data_lancamento = Column(Date, default=date.today)
+
     aluno = relationship("Aluno", back_populates="notas")
     professor = relationship("Professor", back_populates="notas")
     materia = relationship("Materia", back_populates="notas")
